@@ -144,6 +144,55 @@
 
 
 ### HOW TO USE THE TOKEN FOR AUTHENTICATING THE USER
-### WHAT KIND OF AUTHENTICATION TOKEN TO USE (JWT OR OTHER)
+### WHAT KIND OF AUTHENTICATION TOKEN TO USE (JWT OR OTHER) [We will go with JWT]
 ### DATABASE SCHEMA
 ### HOW TO CHECK WHETHER THE CLIENT IS THE CREATOR OF TO-DO ITEM
+
+
+=> store the hash of the password in database for security reasons
+=> compare the hash of the entered password and stores password while logging user in the app
+
+## DATABASE SCHEMA
+- create a users table, that will store the user login information
+    1. username (UNIQUE)
+    2. id (PRIMARY KEY)
+    3. password_hash
+
+- create a to-do items, table => return index as well when returning the response
+    1. id (PRIMARY KEY)
+    2. userId (FOREIGN KEY)
+    3. title
+    4. description
+
+- implement paging (can be used at the time of implementing)
+
+
+## Schema
+1. user creates the account
+    (i). we check whether the username is unique, if not 
+    return
+    (ii). we generate the userid (primary key) and store the username 
+    and password_hash in the db
+    (iii). return a jwt
+
+2. user logins
+    (i). check the username, hash the user password and check it against
+    the entries in db
+    (ii). if valid return a jwt
+
+3. user tries to get to-do items
+    (i). verify the jwt sent as the authorization header
+    (ii). if valid, return the to-do items taking into account the paging
+    and limit query provided
+
+4. user tries to update/delete to-do item
+    (i). verify the jwt sent as the authorization header
+    (ii). verify whether user has the persmission to carry out
+    operation, he should be the creator of to-do item
+    (iii). update/delete the to-do item in db
+    (iv). successful updation should be responded with updated object, and successful deletion with 204 status code
+
+5. user creates a to-do item
+    (i). verify the jwt
+    (ii). create a to-do item in to-do-items table in db
+    (iii). successful creation should return the created to-do object
