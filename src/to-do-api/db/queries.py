@@ -26,3 +26,9 @@ add_user = """
     INSERT INTO uses (username, email, password_hash)
     VALUES(?, ?, ?)
 """
+
+find_user_with_email = """
+    SELECT id, password_hash
+    FROM users
+    WHERE email = ?
+"""
