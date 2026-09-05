@@ -96,3 +96,41 @@ def login(email: str, password: str) -> str | None:
 
     connection.close()
     return None
+
+
+def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
+    try:
+        payload = jwt.decode(
+            token, 
+            SECRET_KEY,
+            algorithms=["HS256"]
+        )
+    except jwt.InvalidTokenError:
+        return None
+
+    user_id = payload.get("user_id")
+    if user_id is None:
+        return None
+
+    connection = sqlite3.connect("todo.db")
+
+    create_tables(connection)
+
+    cursor = connection.execute(queries.add_todo_item, (user_id, title, desc))
+    connection.commit()
+
+    todo_id = cursor.lastrowid
+
+    cursor = connection.execute(queries.get_todo_items_count, (user_id, ))
+    index = cursor.fetchone()[0]
+
+    connection.close()
+
+    response = {
+        "index": index,
+        "id": todo_id,
+        "title": title,
+        "description": desc
+    }
+
+    return response

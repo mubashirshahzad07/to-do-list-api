@@ -23,7 +23,7 @@ find_username_or_email = """
 """
 
 add_user = """
-    INSERT INTO uses (username, email, password_hash)
+    INSERT INTO users (username, email, password_hash)
     VALUES(?, ?, ?)
 """
 
@@ -31,4 +31,13 @@ find_user_with_email = """
     SELECT id, password_hash
     FROM users
     WHERE email = ?
+"""
+
+add_todo_item = """
+    INSERT INTO todos (user_id, title, description)
+    VALUE(?, ?, ?)
+"""
+
+get_todo_items_count = """
+    SELECT COUNT(*) FROM todos WHERE user_id = ?
 """
