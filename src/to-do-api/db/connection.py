@@ -98,7 +98,7 @@ def login(email: str, password: str) -> str | None:
 def _verify_token(token: str) -> dict | None:
     """
     Return:
-        None: unauthorizen/ invalid token
+        None: unauthenticated
         payload(dict): valid token
     """
     try:
@@ -116,7 +116,7 @@ def _verify_token(token: str) -> dict | None:
 def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
     """
     Return:
-        None: unauthorized request
+        None: unauthenticated or unauthorized
         created_item(dict): successful creation of to do item
     """
 
@@ -155,7 +155,7 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
 def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict | None:
     """
     Return:
-        None: unauthorized request
+        None: unauthenticated, unauthorized, or todo item doesn't exist
         updated_item(dict): todo item is successfully updated
     """
 
@@ -172,26 +172,15 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
     create_tables(connection)
 
     cursor = connection.execute(
-        queries.get_todo_item,
-        (todo_id,)
-    )
-
-    todo_resp = cursor.fetchone()
-    if todo_resp is None:
-        connection.close()
-        return None
-
-    todo_user_id = todo_resp[0]
-
-    if user_id != todo_user_id:
-        connection.close()
-        return None
-
-    connection.execute(
         queries.update_todo_item, 
-        (title, desc, todo_id)
+        (title, desc, todo_id, user_id)
     )
     connection.commit()
+
+    rows_affected = cursor.rowcount
+    if rows_affected == 0:
+        connection.close()
+        return None
 
     cursor = connection.execute(
         queries.get_updated_todo_item_index,
@@ -209,3 +198,39 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
     }
 
     return response
+
+
+def delete_todo_item(token: str, todo_id: int) -> int | None:
+    """
+    Return:
+        None: unauthenticated, unauthorized, or todo item doesn't exist
+        status_code(int): successful deletion
+    """
+
+    payload = _verify_token(token) 
+    if payload is None:
+        return None
+
+    user_id = payload.get("user_id")
+    if user_id is None:
+        return None
+
+    connection = sqlite3.connect("todo.db")
+
+    create_tables(connection)
+
+    cursor = connection.execute(
+        queries.delete_todo_item,
+        (todo_id, user_id)
+    )
+    connection.commit()
+
+    rows_affected = cursor.rowcount
+
+    if rows_affected == 0:
+        connection.close()
+        return None
+
+    connection.close()
+
+    return 204

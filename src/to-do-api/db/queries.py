@@ -53,11 +53,10 @@ get_updated_todo_item_index = """
 update_todo_item = """
     UPDATE todos
     SET title = ?, description = ?
-    WHERE id = ?
+    WHERE id = ? and user_id = ?
 """
 
-get_todo_item = """
-    SELECT user_id
-    FROM todos
-    WHERE id = ? 
+delete_todo_item = """
+    DELETE FROM todos
+    WHERE id = ? and user_id = ?
 """
