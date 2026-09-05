@@ -20,10 +20,7 @@ def create_tables(connection: sqlite3.Connection) -> None:
     # enable foreign keys
     connection.execute("PRAGMA foreign_keys = ON")
 
-    # creates users table
     connection.execute(queries.create_users_table)
-
-    # creates todos table
     connection.execute(queries.create_todos_table)
 
     connection.commit()
@@ -98,7 +95,12 @@ def login(email: str, password: str) -> str | None:
     return None
 
 
-def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
+def _verify_token(token: str) -> dict | None:
+    """
+    Return:
+        None: unauthorizen/ invalid token
+        payload(dict): valid token
+    """
     try:
         payload = jwt.decode(
             token, 
@@ -106,6 +108,20 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
             algorithms=["HS256"]
         )
     except jwt.InvalidTokenError:
+        return None
+
+    return payload
+
+
+def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
+    """
+    Return:
+        None: unauthorized request
+        created_item(dict): successful creation of to do item
+    """
+
+    payload = _verify_token(token)
+    if not payload:
         return None
 
     user_id = payload.get("user_id")
@@ -122,6 +138,65 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
     todo_id = cursor.lastrowid
 
     cursor = connection.execute(queries.get_todo_items_count, (user_id, ))
+    index = cursor.fetchone()[0]
+
+    connection.close()
+
+    response = {
+        "index": index,
+        "id": todo_id,
+        "title": title,
+        "description": desc
+    }
+
+    return response
+
+
+def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict | None:
+    """
+    Return:
+        None: unauthorized request
+        updated_item(dict): todo item is successfully updated
+    """
+
+    payload = _verify_token(token)
+    if payload is None:
+        return None
+
+    user_id = payload.get("user_id")
+    if user_id is None:
+        return None
+
+    connection = sqlite3.connect("todo.db")
+
+    create_tables(connection)
+
+    cursor = connection.execute(
+        queries.get_todo_item,
+        (todo_id,)
+    )
+
+    todo_resp = cursor.fetchone()
+    if todo_resp is None:
+        connection.close()
+        return None
+
+    todo_user_id = todo_resp[0]
+
+    if user_id != todo_user_id:
+        connection.close()
+        return None
+
+    connection.execute(
+        queries.update_todo_item, 
+        (title, desc, todo_id)
+    )
+    connection.commit()
+
+    cursor = connection.execute(
+        queries.get_updated_todo_item_index,
+        (user_id, todo_id)    
+    )
     index = cursor.fetchone()[0]
 
     connection.close()

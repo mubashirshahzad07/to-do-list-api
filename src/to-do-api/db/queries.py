@@ -39,5 +39,25 @@ add_todo_item = """
 """
 
 get_todo_items_count = """
-    SELECT COUNT(*) FROM todos WHERE user_id = ?
+    SELECT COUNT(*) 
+    FROM todos 
+    WHERE user_id = ?
+"""
+
+get_updated_todo_item_index = """
+    SELECT COUNT(*) 
+    FROM todos 
+    WHERE user_id = ? and id <= ?;
+"""
+
+update_todo_item = """
+    UPDATE todos
+    SET title = ?, description = ?
+    WHERE id = ?
+"""
+
+get_todo_item = """
+    SELECT user_id
+    FROM todos
+    WHERE id = ? 
 """
