@@ -37,14 +37,20 @@ def create_user(username: str, email: str, password: str) -> str | None:
 
     create_tables(connection)
 
-    cursor = connection.execute(queries.find_username_or_email, (username, email))
+    cursor = connection.execute(
+        queries.find_username_or_email,
+        (username, email)
+    )
     exists = cursor.fetchone()
     if exists:
         connection.close()
         return None
 
     password_hash = sha256(password.encode("utf-8")).hexdigest()
-    cursor = connection.execute(queries.add_user, (username, email, password_hash))
+    cursor = connection.execute(
+        queries.add_user,
+        (username, email, password_hash)
+    )
 
     connection.commit()
 
@@ -62,7 +68,7 @@ def create_user(username: str, email: str, password: str) -> str | None:
 
 
 def login(email: str, password: str) -> str | None:
-    """ 
+    """
     Return:
         None: invalid login information
         token(str): valid login information
@@ -103,7 +109,7 @@ def _verify_token(token: str) -> dict | None:
     """
     try:
         payload = jwt.decode(
-            token, 
+            token,
             SECRET_KEY,
             algorithms=["HS256"]
         )
@@ -152,7 +158,11 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
     return response
 
 
-def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict | None:
+def update_to_do_item(
+    token: str,
+    todo_id: int,
+    title: str, desc: str
+) -> dict | None:
     """
     Return:
         None: unauthenticated, unauthorized, or todo item doesn't exist
@@ -172,7 +182,7 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
     create_tables(connection)
 
     cursor = connection.execute(
-        queries.update_todo_item, 
+        queries.update_todo_item,
         (title, desc, todo_id, user_id)
     )
     connection.commit()
@@ -184,7 +194,7 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
 
     cursor = connection.execute(
         queries.get_updated_todo_item_index,
-        (user_id, todo_id)    
+        (user_id, todo_id)
     )
     index = cursor.fetchone()[0]
 
@@ -207,7 +217,7 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
         status_code(int): successful deletion
     """
 
-    payload = _verify_token(token) 
+    payload = _verify_token(token)
     if payload is None:
         return None
 
@@ -234,3 +244,60 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
     connection.close()
 
     return 204
+
+
+def get_todo_items(token: str, page: int, limit: int) -> dict | None:
+    """
+    Return:
+        None: unauthenticated
+        todo_items(dict): successful retreival
+    """
+
+    payload = _verify_token(token)
+    if payload is None:
+        return None
+
+    user_id = payload.get("user_id")
+    if user_id is None:
+        return None
+
+    if page < 1 or limit < 1:
+        return None
+
+    connection = sqlite3.connect("todo.db")
+
+    create_tables(connection)
+
+    offset = (page - 1) * limit
+    cursor = connection.execute(
+        queries.get_todo_items_paginated,
+        (user_id, limit, offset)
+    )
+    rows = cursor.fetchall()
+
+    cursor = connection.execute(
+        queries.get_total_todos_for_user_id,
+        (user_id,)
+    )
+    total_todos = cursor.fetchone()[0]
+
+    connection.close()
+
+    data = []
+    for index, (todo_id, title, desc) in enumerate(rows, start=offset + 1):
+        curr_data = {
+            "index": index,
+            "id": todo_id,
+            "title": title,
+            "description": desc
+        }
+        data.append(curr_data)
+
+    response = {
+        "data": data,
+        "page": page,
+        "limit": limit,
+        "total": total_todos
+    }
+
+    return response

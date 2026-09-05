@@ -2,6 +2,7 @@ create_users_table = """
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL
     )
 """
@@ -35,18 +36,18 @@ find_user_with_email = """
 
 add_todo_item = """
     INSERT INTO todos (user_id, title, description)
-    VALUE(?, ?, ?)
+    VALUES(?, ?, ?)
 """
 
 get_todo_items_count = """
-    SELECT COUNT(*) 
-    FROM todos 
+    SELECT COUNT(*)
+    FROM todos
     WHERE user_id = ?
 """
 
 get_updated_todo_item_index = """
-    SELECT COUNT(*) 
-    FROM todos 
+    SELECT COUNT(*)
+    FROM todos
     WHERE user_id = ? and id <= ?;
 """
 
@@ -59,4 +60,18 @@ update_todo_item = """
 delete_todo_item = """
     DELETE FROM todos
     WHERE id = ? and user_id = ?
+"""
+
+get_todo_items_paginated = """
+    SELECT id, title, description
+    FROM todos
+    WHERE user_id = ?
+    ORDER BY id
+    LIMIT ? OFFSET ?;
+"""
+
+get_total_todos_for_user_id = """
+    SELECT COUNT(*)
+    FROM todos
+    WHERE user_id = ?
 """
