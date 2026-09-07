@@ -25,7 +25,7 @@ def create_todo_item():
     return jsonify(item_created), 201
 
 
-@todo.route("/todos/<int:todo_id>", methdos=["PUT"])
+@todo.route("/todos/<int:todo_id>", methods=["PUT"])
 def update_todo_item(todo_id: int):
     token = request.headers.get("token")
     title = request.form.get("title")
@@ -47,8 +47,16 @@ def update_todo_item(todo_id: int):
 def delete_todo_item(todo_id):
     token = request.headers.get("token")
 
+    if not token:
+        response = {"message": "Unauthenticated"}
+        return jsonify(response), 401
 
-    return {}
+    deleted_item = database.delete_todo_item(token, todo_id)
+    if deleted_item is None:
+        response = {"message": "Forbidden"}
+        return jsonify(response), 403
+
+    return "", 204
 
 
 @todo.route("/todos", methods=["GET"])
