@@ -39,7 +39,7 @@ def register_user(username: str, email: str, password: str) -> dict | None:
 
     cursor = connection.execute(
         queries.find_username_or_email,
-          (username, email)
+        (username, email)
     )
     exists = cursor.fetchone()
     if exists:
@@ -64,11 +64,11 @@ def register_user(username: str, email: str, password: str) -> dict | None:
         algorithm="HS256"
     )
 
-    return {"token" : token} 
+    return {"token": token}
 
 
 def login(email: str, password: str) -> dict | None:
-    """ 
+    """
     Return:
         None: invalid login information
         dict (token): valid login information
@@ -109,7 +109,7 @@ def _verify_token(token: str) -> dict | None:
     """
     try:
         payload = jwt.decode(
-            token, 
+            token,
             SECRET_KEY,
             algorithms=["HS256"]
         )
@@ -158,7 +158,12 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
     return response
 
 
-def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict | None:
+def update_to_do_item(
+        token: str,
+        todo_id: int,
+        title: str,
+        desc: str
+) -> dict | None:
     """
     Return:
         None: Unauthenticated or Unauthorized
@@ -178,7 +183,7 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
     create_tables(connection)
 
     cursor = connection.execute(
-        queries.update_todo_item, 
+        queries.update_todo_item,
         (title, desc, todo_id, user_id)
     )
     connection.commit()
@@ -190,7 +195,7 @@ def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict |
 
     cursor = connection.execute(
         queries.get_updated_todo_item_index,
-        (user_id, todo_id)    
+        (user_id, todo_id)
     )
     index = cursor.fetchone()[0]
 
@@ -213,7 +218,7 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
         int(status_code): successful deletion
     """
 
-    payload = _verify_token(token) 
+    payload = _verify_token(token)
     if payload is None:
         return None
 
@@ -272,6 +277,7 @@ def get_todo_items(token: str, page: int, limit: int) -> dict | None:
         queries.get_total_todos_for_user_id,
         (user_id, )
     )
+    total = cursor.fetchone()[0]
 
     connection.close()
 
@@ -289,7 +295,7 @@ def get_todo_items(token: str, page: int, limit: int) -> dict | None:
         "data": data,
         "page": page,
         "limit": limit,
-        "total": index
+        "total": total
     }
 
     return response

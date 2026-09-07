@@ -6,6 +6,9 @@ import db.connection as database
 todo = Blueprint("todo", __name__)
 
 
+# add docstring for return
+
+
 @todo.route("/todos", methods=["POST"])
 def create_todo_item():
     token = request.headers.get("token")
