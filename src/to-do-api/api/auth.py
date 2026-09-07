@@ -1,13 +1,12 @@
-from flask import Flask, request, jsonify
-import json
+from flask import Blueprint, request, jsonify
 
 import db.connection as database
 
 
-app = Flask(__name__)
+auth = Blueprint("auth", __name__)
 
 
-@app.route("/register", methods=["POST"])
+@auth.route("/register", methods=["POST"])
 def create_account():
     """
     Returns:
@@ -24,15 +23,15 @@ def create_account():
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    db_response = database.register_user(username, email, password)
-    if db_response is None:
+    token = database.register_user(username, email, password)
+    if token is None:
         response = {"message" : "username or email is arleady taken."}
         return jsonify(response), 409
 
-    return jsonify(db_response), 201
+    return jsonify(token), 201
 
 
-@app.route("/login", methods=["POST"])
+@auth.route("/login", methods=["POST"])
 def login():
     """
     Returns:
@@ -48,9 +47,9 @@ def login():
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    db_response = database.login(email, password)
-    if db_response is None:
+    token = database.login(email, password)
+    if token is None:
         response = {"message": "invalid email or password"}
         return jsonify(response), 401
 
-    return jsonify(db_response), 200
+    return jsonify(token), 200

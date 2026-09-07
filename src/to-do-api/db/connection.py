@@ -105,7 +105,7 @@ def _verify_token(token: str) -> dict | None:
     """
     Return:
         None: unauthenticated
-        payload(dict): valid token
+        dict (payload): valid token
     """
     try:
         payload = jwt.decode(
@@ -123,7 +123,7 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
     """
     Return:
         None: unauthenticated or unauthorized
-        created_item(dict): successful creation of to do item
+        dict (created_item): successful creation of to do item
     """
 
     payload = _verify_token(token)
@@ -161,8 +161,8 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
 def update_to_do_item(token: str, todo_id: int, title: str, desc: str) -> dict | None:
     """
     Return:
-        None: unauthenticated, unauthorized, or todo item doesn't exist
-        updated_item(dict): todo item is successfully updated
+        None: Unauthenticated or Unauthorized
+        dict(updated_item): todo item is successfully updated
     """
 
     payload = _verify_token(token)
@@ -210,7 +210,7 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
     """
     Return:
         None: unauthenticated, unauthorized, or todo item doesn't exist
-        status_code(int): successful deletion
+        int(status_code): successful deletion
     """
 
     payload = _verify_token(token) 
@@ -246,7 +246,7 @@ def get_todo_items(token: str, page: int, limit: int) -> dict | None:
     """
     Return:
         None: unauthenticated
-        todo_items(dict): successful retreival
+        dict(todo_items): successful retreival
     """
 
     payload = _verify_token(token)
