@@ -26,11 +26,11 @@ def create_tables(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
-def register_user(username: str, email: str, password: str) -> str | None:
+def register_user(username: str, email: str, password: str) -> dict | None:
     """
     Return:
         None: username or email is already taken
-        token(str): new account is created
+        dict (token): user is created
     """
 
     connection = sqlite3.connect("todo.db")
@@ -64,14 +64,14 @@ def register_user(username: str, email: str, password: str) -> str | None:
         algorithm="HS256"
     )
 
-    return token
+    return {"token" : token} 
 
 
-def login(email: str, password: str) -> str | None:
+def login(email: str, password: str) -> dict | None:
     """ 
     Return:
         None: invalid login information
-        token(str): valid login information
+        dict (token): valid login information
     """
 
     connection = sqlite3.connect("todo.db")
@@ -95,7 +95,7 @@ def login(email: str, password: str) -> str | None:
         )
 
         connection.close()
-        return token
+        return {"token": token}
 
     connection.close()
     return None

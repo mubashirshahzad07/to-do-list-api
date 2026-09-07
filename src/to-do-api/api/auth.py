@@ -10,15 +10,17 @@ app = Flask(__name__)
 @app.route("/register", methods=["POST"])
 def create_account():
     """
-    Return:
-        error_message: account couldn't be created
-        authentication_token: successful account creation
+    Returns:
+        400: missing information
+        409: username or email already taken
+        201: account successfully created
     """
+
     username = request.form.get("username")
     email = request.form.get("email")
     password = request.form.get("password")
 
-    if username is None or email is None or password is None:
+    if not username or not email or not password:
         response = {"message": "missing information"}
         return jsonify(response), 400
 
@@ -27,21 +29,22 @@ def create_account():
         response = {"message" : "username or email is arleady taken."}
         return jsonify(response), 409
 
-    authentication_token = db_response
-    return authentication_token, 201
+    return jsonify(db_response), 201
 
 
 @app.route("/login", methods=["POST"])
 def login():
     """
     Returns:
-        error_message: invalid login information
-        authentication_token: successful login
+        400: missing information
+        401: invalid email or password
+        200: successful login
     """
+
     email = request.form.get("email")
     password = request.form.get("password")
 
-    if email is None or password is None:
+    if not email or not password:
         response = {"message": "missing information"}
         return jsonify(response), 400
 
@@ -50,5 +53,4 @@ def login():
         response = {"message": "invalid email or password"}
         return jsonify(response), 401
 
-    authentication_token = db_response
-    return authentication_token, 200
+    return jsonify(db_response), 200
