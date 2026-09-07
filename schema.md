@@ -60,7 +60,7 @@
 
 - CREATE A TO-DO ITEM:
     1. FORMAT:
-    POST /todos
+    POST /to-dos
     {
     "title": "Buy groceries",
     "description": "Buy milk, eggs, and bread"

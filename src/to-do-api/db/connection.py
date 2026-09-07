@@ -26,7 +26,7 @@ def create_tables(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
-def create_user(username: str, email: str, password: str) -> str | None:
+def register_user(username: str, email: str, password: str) -> str | None:
     """
     Return:
         None: username or email is already taken
