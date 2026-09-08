@@ -1,4 +1,4 @@
-from flask import  Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 
 import db.connection as database
 
@@ -6,11 +6,15 @@ import db.connection as database
 todo = Blueprint("todo", __name__)
 
 
-# add docstring for return
-
-
 @todo.route("/todos", methods=["POST"])
 def create_todo_item():
+    """
+    Returns:
+        400: missing information
+        401: unauthenticated
+        201: todo item successfully created
+    """
+
     token = request.headers.get("token")
     title = request.form.get("title")
     description = request.form.get("description")
@@ -30,6 +34,13 @@ def create_todo_item():
 
 @todo.route("/todos/<int:todo_id>", methods=["PUT"])
 def update_todo_item(todo_id: int):
+    """
+    Returns:
+        400: missing information
+        401: unauthorized
+        200: successful update
+    """
+
     token = request.headers.get("token")
     title = request.form.get("title")
     description = request.form.get("description")
@@ -38,7 +49,12 @@ def update_todo_item(todo_id: int):
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    updated_item = database.update_to_do_item(token, todo_id, title, description)
+    updated_item = database.update_to_do_item(
+        token,
+        todo_id,
+        title,
+        description
+    )
     if updated_item is None:
         response = {"message": "Unauthorized"}
         return jsonify(response), 401
@@ -48,6 +64,13 @@ def update_todo_item(todo_id: int):
 
 @todo.route("/todos/<int:todo_id>", methods=["DELETE"])
 def delete_todo_item(todo_id):
+    """
+    Returns:
+        401: unauthenticated
+        403: forbidden / unauthorized
+        204: successful deletion
+    """
+
     token = request.headers.get("token")
 
     if not token:
@@ -64,4 +87,24 @@ def delete_todo_item(todo_id):
 
 @todo.route("/todos", methods=["GET"])
 def get_todo_items():
-    return {}
+    """
+    Returns:
+        400: missing information
+        401: unauthenticated
+        200: successful retreival
+    """
+
+    token = request.headers.get("token")
+    page = request.args.get("page", type=int)
+    limit = request.args.get("limit", type=int)
+
+    if not token or not page or not limit:
+        response = {"message": "missing information"}
+        return jsonify(response), 400
+
+    todo_items = database.get_todo_items(token, page, limit)
+    if todo_items is None:
+        response = {"message": "Unauthenticated"}
+        return jsonify(response), 401
+
+    return jsonify(todo_items), 200
