@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-import db.connection as database
+from ..db import connection as database
 
 
 todo = Blueprint("todo", __name__)

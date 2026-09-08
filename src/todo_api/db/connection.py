@@ -5,7 +5,7 @@ import sqlite3
 import jwt
 import os
 
-import db.queries as queries
+from ..db import queries
 
 
 load_dotenv()

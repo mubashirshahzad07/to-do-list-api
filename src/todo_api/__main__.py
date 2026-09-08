@@ -1,7 +1,7 @@
 from flask import Flask
 
-from api.auth import auth
-from api.todo import todo
+from .api.auth import auth
+from .api.todo import todo
 
 
 app = Flask(__name__)

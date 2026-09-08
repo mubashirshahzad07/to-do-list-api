@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-import db.connection as database
+from ..db import connection as database
 
 
 auth = Blueprint("auth", __name__)
