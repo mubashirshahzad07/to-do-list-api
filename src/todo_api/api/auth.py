@@ -25,7 +25,7 @@ def create_account():
 
     token = database.register_user(username, email, password)
     if token is None:
-        response = {"message": "username or email is arleady taken."}
+        response = {"message": "username or email is already taken."}
         return jsonify(response), 409
 
     return jsonify(token), 201
