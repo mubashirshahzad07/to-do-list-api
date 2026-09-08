@@ -8,3 +8,6 @@ app = Flask(__name__)
 app.register_blueprint(auth)
 app.register_blueprint(todo)
 
+
+app.json.sort_keys = False
+app.run(debug=True)
