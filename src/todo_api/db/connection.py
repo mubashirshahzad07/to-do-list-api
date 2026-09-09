@@ -15,15 +15,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise KeyError("SECRET_KEY does not exist.")
 
+connection = sqlite3.connect("todo.db")
 
-def create_tables(connection: sqlite3.Connection) -> None:
-    # enable foreign keys
-    connection.execute("PRAGMA foreign_keys = ON")
+connection.execute("PRAGMA foreign_keys = ON")
+connection.execute(queries.create_users_table)
+connection.execute(queries.create_todos_table)
 
-    connection.execute(queries.create_users_table)
-    connection.execute(queries.create_todos_table)
-
-    connection.commit()
+connection.commit()
+connection.close()
 
 
 def register_user(username: str, email: str, password: str) -> dict | None:
@@ -34,8 +33,6 @@ def register_user(username: str, email: str, password: str) -> dict | None:
     """
 
     connection = sqlite3.connect("todo.db")
-
-    create_tables(connection)
 
     cursor = connection.execute(
         queries.find_username_or_email,
@@ -75,8 +72,6 @@ def login(email: str, password: str) -> dict | None:
     """
 
     connection = sqlite3.connect("todo.db")
-
-    create_tables(connection)
 
     cursor = connection.execute(queries.find_user_with_email, (email, ))
     user = cursor.fetchone()
@@ -136,8 +131,6 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
 
     connection = sqlite3.connect("todo.db")
 
-    create_tables(connection)
-
     cursor = connection.execute(queries.add_todo_item, (user_id, title, desc))
     connection.commit()
 
@@ -179,8 +172,6 @@ def update_to_do_item(
         return None
 
     connection = sqlite3.connect("todo.db")
-
-    create_tables(connection)
 
     cursor = connection.execute(
         queries.update_todo_item,
@@ -228,8 +219,6 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
 
     connection = sqlite3.connect("todo.db")
 
-    create_tables(connection)
-
     cursor = connection.execute(
         queries.delete_todo_item,
         (todo_id, user_id)
@@ -263,8 +252,6 @@ def get_todo_items(token: str, page: int, limit: int) -> dict | None:
         return None
 
     connection = sqlite3.connect("todo.db")
-
-    create_tables(connection)
 
     offset = (page - 1) * limit
     cursor = connection.execute(
