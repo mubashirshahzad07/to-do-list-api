@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify
 
 from ..db import connection as database
+from .limiter import limiter
 
 
 auth = Blueprint("auth", __name__)
 
 
 @auth.route("/register", methods=["POST"])
+@limiter.limit("5 per hour")
 def create_account():
     """
     Returns:
@@ -32,6 +34,7 @@ def create_account():
 
 
 @auth.route("/login", methods=["POST"])
+@limiter.limit("7 per hour")
 def login():
     """
     Returns:

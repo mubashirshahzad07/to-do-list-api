@@ -1,9 +1,9 @@
-from hashlib import sha256
-from dotenv import load_dotenv
-
 import sqlite3
 import jwt
 import os
+
+from hashlib import sha256
+from dotenv import load_dotenv
 
 from ..db import queries
 
