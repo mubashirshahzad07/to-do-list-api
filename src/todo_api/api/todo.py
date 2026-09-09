@@ -37,7 +37,7 @@ def update_todo_item(todo_id: int):
     """
     Returns:
         400: missing information
-        401: unauthorized
+        403: forbidden
         200: successful update
     """
 
@@ -56,8 +56,8 @@ def update_todo_item(todo_id: int):
         description
     )
     if updated_item is None:
-        response = {"message": "Unauthorized"}
-        return jsonify(response), 401
+        response = {"message": "Forbidden"}
+        return jsonify(response), 403
 
     return jsonify(updated_item), 200
 
@@ -98,7 +98,7 @@ def get_todo_items():
     page = request.args.get("page", type=int)
     limit = request.args.get("limit", type=int)
 
-    if not token or not page or not limit:
+    if not token or not page or not limit or page <= 0 or limit <= 0:
         response = {"message": "missing information"}
         return jsonify(response), 400
 

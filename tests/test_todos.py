@@ -133,3 +133,473 @@ def test_missing_information_item_creation(client, data, headers):
 
     assert response.status_code == 400
     assert response.json == expected_response
+
+
+# ------------ UPDATE TO DO ITEM ----------
+
+def test_successful_item_update(client):
+    register_response = client.post(
+        "/register",
+        data={
+            "username": "update_username_1",
+            "email": "update_email_1",
+            "password": "update_password"
+        }
+    )
+
+    assert register_response.status_code == 201
+
+    token = register_response.json["token"]
+    headers = {
+        "token": token
+    }
+
+    create_item_response = client.post(
+        "/todos",
+        data={
+            "title": "do something",
+            "description": "desc of something"
+        },
+        headers=headers   
+    )
+
+    assert create_item_response.status_code == 201
+
+    todo_id = create_item_response.json["id"]
+
+    new_title = "new title"
+    new_description = "new description"
+
+    response = client.put(
+        f"/todos/{todo_id}",
+        data={
+            "title": new_title,
+            "description": new_description
+        },
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    assert "index" in response.json
+    assert response.json["id"] == todo_id
+    assert response.json["title"] == new_title
+    assert response.json["description"] == new_description
+
+
+def test_unauthorized_item_update(client):
+    register_response_1 = client.post(
+        "/register",
+        data={
+            "username": "udpate_username_2",
+            "email": "update_email_2",
+            "password": "update_password"
+        }
+    )
+
+    assert register_response_1.status_code == 201
+    token1 = register_response_1.json["token"]
+
+    register_response_2 = client.post(
+        "/register",
+        data={
+            "username": "udpate_username_3",
+            "email": "update_email_3",
+            "password": "update_password"
+        }
+    )
+
+    assert register_response_2.status_code == 201
+    token2 = register_response_2.json["token"]
+
+    create_item_response = client.post(
+        "/todos",
+        data={
+            "title": "do something",
+            "description": "desc of something"
+        },
+        headers={
+            "token": token1
+        }   
+    )
+
+    assert create_item_response.status_code == 201
+
+    todo_id = create_item_response.json["id"]
+
+    new_title = "new title"
+    new_description = "new description"
+
+    response = client.put(
+        f"/todos/{todo_id}",
+        data={
+            "title": new_title,
+            "description": new_description
+        },
+        headers={
+            "token": token2
+        }
+    )
+
+    expected_response = {"message": "Forbidden"}
+
+    assert response.status_code == 403
+    assert response.json == expected_response
+
+
+@pytest.mark.parametrize(
+    "data, headers",
+    [
+        (
+            {
+                "title": "some title",
+                "description": "some desc"
+            },
+            {
+                "token": ""
+            }
+        ),
+        (
+            {
+                "title": "some title",
+                "description": "some desc"
+            },
+            {}
+        ),
+        (
+            {
+                "title": "",
+                "description": "some desc"
+            },
+            {
+                "token": "does not matter"
+            }
+        ),
+        (
+            {
+                "description": "some desc"
+            },
+            {
+                "token": "does not matter"
+            }
+        ),
+        (
+            {
+                "title": "some title",
+                "description": ""
+            },
+            {
+                "token": "does not matter"
+            }
+        ),
+        (
+            {
+                "title": "some title",
+            },
+            {
+                "token": "does not matter"
+            }
+        ),
+    ]
+)
+def test_missing_information_item_update(client, data, headers):
+    response = client.put(
+        "/todos/1",
+        data=data,
+        headers=headers
+    )
+
+    expected_response = {"message": "missing information"}
+
+    assert response.status_code == 400
+    assert response.json == expected_response
+
+
+# ------------ DELETE TO DO ITEM ----------
+
+def test_successful_item_deletion(client):
+    register_response = client.post(
+        "/register",
+        data={
+            "username": "delete_username_1",
+            "email": "delete_email_1",
+            "password": "delete_password"
+        }
+    )
+
+    assert register_response.status_code == 201
+
+    token = register_response.json["token"]
+    headers = {
+        "token": token
+    }
+
+    create_item_response = client.post(
+        "/todos",
+        data={
+            "title": "do something",
+            "description": "desc of something"
+        },
+        headers=headers
+    )
+
+    assert create_item_response.status_code == 201
+
+    todo_id = create_item_response.json["id"]
+
+    response = client.delete(
+        f"/todos/{todo_id}",
+        headers=headers
+    )
+
+    assert response.status_code == 204
+    assert response.data == b""
+
+
+def test_unauthenticated_item_deletion(client):
+    response = client.delete(
+        "/todos/1"
+    )
+
+    expected_response = {
+        "message": "Unauthenticated"
+    }
+
+    assert response.status_code == 401
+    assert response.json == expected_response
+
+
+def test_unauthorized_item_deletion(client):
+    register_response_1 = client.post(
+        "/register",
+        data={
+            "username": "delete_username_2",
+            "email": "delete_email_2",
+            "password": "delete_password"
+        }
+    )
+
+    assert register_response_1.status_code == 201
+    token1 = register_response_1.json["token"]
+
+    register_response_2 = client.post(
+        "/register",
+        data={
+            "username": "delete_username_3",
+            "email": "delete_email_3",
+            "password": "delete_password"
+        }
+    )
+
+    assert register_response_2.status_code == 201
+    token2 = register_response_2.json["token"]
+
+    create_item_response = client.post(
+        "/todos",
+        data={
+            "title": "do something",
+            "description": "desc of something"
+        },
+        headers={
+            "token": token1
+        }
+    )
+
+    assert create_item_response.status_code == 201
+
+    todo_id = create_item_response.json["id"]
+
+    response = client.delete(
+        f"/todos/{todo_id}",
+        headers={
+            "token": token2
+        }
+    )
+
+    expected_response = {
+        "message": "Forbidden"
+    }
+
+    assert response.status_code == 403
+    assert response.json == expected_response
+
+
+# ------------ GET TO DO ITEMS ----------
+
+def test_successful_item_retrieval(client):
+    register_response = client.post(
+        "/register",
+        data={
+            "username": "get_username_1",
+            "email": "get_email_1",
+            "password": "get_password"
+        }
+    )
+
+    assert register_response.status_code == 201
+
+    token = register_response.json["token"]
+    headers = {
+        "token": token
+    }
+
+    first_item_response = client.post(
+        "/todos",
+        data={
+            "title": "first todo",
+            "description": "first description"
+        },
+        headers=headers
+    )
+
+    assert first_item_response.status_code == 201
+
+    second_item_response = client.post(
+        "/todos",
+        data={
+            "title": "second todo",
+            "description": "second description"
+        },
+        headers=headers
+    )
+
+    assert second_item_response.status_code == 201
+
+    page = 1
+    limit = 10
+
+    response = client.get(
+        "/todos",
+        query_string={
+            "page": page,
+            "limit": limit
+        },
+        headers=headers
+    )
+
+    expected_total = 2
+
+    assert response.status_code == 200
+    assert len(response.json["data"]) == 2
+
+    assert response.json["data"][0]["title"] == "first todo"
+    assert response.json["data"][0]["description"] == "first description"
+
+    assert response.json["data"][1]["title"] == "second todo"
+    assert response.json["data"][1]["description"] == "second description"
+
+    assert response.json["page"] == page
+    assert response.json["limit"] == limit
+    assert response.json["total"] == expected_total
+
+
+@pytest.mark.parametrize(
+    "query_string, headers",
+    [
+        (
+            {
+                "page": 1,
+                "limit": 10
+            },
+            {}
+        ),
+        (
+            {
+                "page": 1,
+                "limit": 10
+            },
+            {
+                "token": ""
+            }
+        ),
+        (
+            {
+                "limit": 10
+            },
+            {
+                "token": "doesntmatter"
+            }
+        ),
+        (
+            {
+                "page": 1
+            },
+            {
+                "token": "doesntmatter"
+            }
+        ),
+        (
+            {},
+            {
+                "token": "doesntmatter"
+            }
+        ),
+        (
+            {
+                "page": 0,
+                "limit": 10
+            },
+            {
+                "token": "doesntmatter"
+            }
+        ),
+        (
+            {
+                "page": 1,
+                "limit": 0
+            },
+            {
+                "token": "doesntmatter"
+            }
+        )
+    ]
+)
+def test_missing_information_item_retrieval(
+    client,
+    query_string,
+    headers
+):
+    response = client.get(
+        "/todos",
+        query_string=query_string,
+        headers=headers
+    )
+
+    expected_response = {
+        "message": "missing information"
+    }
+
+    assert response.status_code == 400
+    assert response.json == expected_response
+
+
+def test_unauthenticated_item_retrieval(client):
+    register_response = client.post(
+        "/register",
+        data={
+            "username": "get_username_2",
+            "email": "get_email_2",
+            "password": "get_password"
+        }
+    )
+
+    assert register_response.status_code == 201
+
+    token = register_response.json["token"]
+
+    response = client.get(
+        "/todos",
+        query_string={
+            "page": 1,
+            "limit": 10
+        },
+        headers={
+            "token": "invalid_token"
+        }
+    )
+
+    expected_response = {
+        "message": "Unauthenticated"
+    }
+
+    assert response.status_code == 401
+    assert response.json == expected_response
