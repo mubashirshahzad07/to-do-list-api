@@ -4,7 +4,7 @@ import os
 
 from hashlib import sha256
 from dotenv import load_dotenv
-from datetime import date, datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta
 
 from ..db import queries
 
@@ -59,7 +59,7 @@ def register_user(username: str, email: str, password: str) -> dict | None:
     access_payload = {
         "user_id": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
     }
 
     refresh_payload = {
@@ -113,7 +113,7 @@ def login(email: str, password: str) -> dict | None:
     access_payload = {
         "user_id": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
     }
 
     refresh_payload = {
@@ -142,7 +142,7 @@ def login(email: str, password: str) -> dict | None:
     return response
 
 
-def _verify_token(access_token: str) -> dict | None:
+def _verify_access_token(access_token: str) -> dict | None:
     """
     Return:
         None: unauthenticated
@@ -157,6 +157,30 @@ def _verify_token(access_token: str) -> dict | None:
     except jwt.InvalidTokenError:
         return None
 
+    if payload.get("type") != "access":
+        return None
+
+    return payload
+
+
+def _verify_refresh_token(access_token: str) -> dict | None:
+    """
+    Return:
+        None: unauthenticated
+        dict (payload): valid token
+    """
+    try:
+        payload = jwt.decode(
+            access_token,
+            SECRET_KEY,
+            algorithms=["HS256"]
+        )
+    except jwt.InvalidTokenError:
+        return None
+
+    if payload.get("type") != "refresh":
+        return None
+
     return payload
 
 
@@ -167,7 +191,7 @@ def create_to_do_item(access_token: str, title: str, desc: str) -> dict | None:
         dict (created_item): successful creation of to do item
     """
 
-    payload = _verify_token(access_token)
+    payload = _verify_access_token(access_token)
     if not payload:
         return None
 
@@ -209,7 +233,7 @@ def update_to_do_item(
         dict(updated_item): todo item is successfully updated
     """
 
-    payload = _verify_token(access_token)
+    payload = _verify_access_token(access_token)
     if payload is None:
         return None
 
@@ -255,7 +279,7 @@ def delete_todo_item(access_token: str, todo_id: int) -> int | None:
         int(status_code): successful deletion
     """
 
-    payload = _verify_token(access_token)
+    payload = _verify_access_token(access_token)
     if payload is None:
         return None
 
@@ -289,7 +313,7 @@ def get_todo_items(access_token: str, page: int, limit: int) -> dict | None:
         dict(todo_items): successful retreival
     """
 
-    payload = _verify_token(access_token)
+    payload = _verify_access_token(access_token)
     if payload is None:
         return None
 
@@ -329,6 +353,41 @@ def get_todo_items(access_token: str, page: int, limit: int) -> dict | None:
         "page": page,
         "limit": limit,
         "total": total
+    }
+
+    return response
+
+
+def refresh_access_token(refresh_token: str) -> dict | None:
+    """
+    Returns:
+        None: invalid refresh token
+        dict (new_access_token, same_refresh_token): valid refresh token
+    """
+
+    payload = _verify_refresh_token(refresh_token)
+    if not payload:
+        return None
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        return None
+
+    access_payload = {
+        "user_id": user_id,
+        "type": "access",
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
+    }
+
+    access_token = jwt.encode(
+        access_payload,
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    response = {
+        "access_token": access_token,
+        "refresh_token": refresh_token
     }
 
     return response

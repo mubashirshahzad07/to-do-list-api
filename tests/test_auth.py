@@ -109,19 +109,6 @@ def test_register_missing_information(client, data):
 
 # ---------- Login ----------
 
-@pytest.fixture
-def registered_user(client):
-    data = {
-        "username": "login_user",
-        "email": "login_user_email",
-        "password": "login_user_password",
-    }
-
-    client.post("/register", data=data)
-
-    return data
-
-
 def test_login_success(client, registered_user):
     response = client.post(
         "/login",
@@ -189,3 +176,50 @@ def test_login_invalid_password(client, registered_user):
     assert response.json == {
         "message": "invalid email or password"
     }
+
+
+# --------------- REFRESH TOKEN -------------
+
+def test_successful_refresh_token(client):
+    register_repsonse = client.post(
+        "/register",
+        data={
+            "username": "refresh_username_1",
+            "email": "refresh_email_1",
+            "password": "refresh_password"
+        }
+    )
+
+    assert register_repsonse.status_code == 201
+
+    refresh_token = register_repsonse.json.get("refresh_token")
+
+    response = client.post(
+        "/refresh",
+        headers={
+            "refresh_token": refresh_token
+        }
+    )
+
+    assert response.status_code == 200
+    assert "access_token" in response.json
+    assert "refresh_token" in response.json
+
+
+def test_missing_information_refresh_token(client):
+    response = client.post("/refresh")
+
+    assert response.status_code == 400
+    assert response.json["message"] == "missing information"
+
+
+def test_invalid_refresh_token(client):
+    response = client.post(
+        "/refresh",
+        headers={
+            "refresh_token": "invalid_refresh_token"
+        }
+    )
+
+    assert response.status_code == 401
+    assert response.json["message"] == "unauthenticated"

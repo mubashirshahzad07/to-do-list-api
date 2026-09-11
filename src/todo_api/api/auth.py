@@ -25,12 +25,12 @@ def create_account():
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    token = database.register_user(username, email, password)
-    if token is None:
+    token_pair = database.register_user(username, email, password)
+    if token_pair is None:
         response = {"message": "username or email is already taken."}
         return jsonify(response), 409
 
-    return jsonify(token), 201
+    return jsonify(token_pair), 201
 
 
 @auth.route("/login", methods=["POST"])
@@ -50,9 +50,32 @@ def login():
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    token = database.login(email, password)
-    if token is None:
+    token_pair = database.login(email, password)
+    if token_pair is None:
         response = {"message": "invalid email or password"}
         return jsonify(response), 401
 
-    return jsonify(token), 200
+    return jsonify(token_pair), 200
+
+
+@auth.route("/refresh", methods=["POST"])
+@limiter.limit("5 per hour")
+def refresh():
+    """
+    Returns:
+        400: missing information
+        401: unauthenticated
+        200: successfully generated a new access_token
+    """
+
+    refresh_token = request.headers.get("refresh_token")
+    if not refresh_token:
+        response = {"message": "missing information"}
+        return jsonify(response), 400
+
+    token_pair = database.refresh_access_token(refresh_token)
+    if token_pair is None:
+        response = {"message": "unauthenticated"}
+        return jsonify(response), 401
+
+    return jsonify(token_pair), 200
