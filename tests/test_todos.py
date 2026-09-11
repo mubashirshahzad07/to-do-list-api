@@ -14,9 +14,9 @@ def test_successful_item_creation(client):
     )
 
     assert register_response.status_code == 201
-    assert "Authorization" in register_response.json
+    assert "access_token" in register_response.json
 
-    Authorization = register_response.json["Authorization"]
+    access_token = register_response.json["access_token"]
 
     response = client.post(
         "/todos",
@@ -25,7 +25,7 @@ def test_successful_item_creation(client):
             "description": "desc of something"
         },
         headers={
-            "Authorization": Authorization
+            "access_token": access_token
         }
     )
 
@@ -48,7 +48,7 @@ def test_unauthenticated_item_creation(client):
             "description": "desc of something"
         },
         headers={
-            "Authorization": "invalid_Authorization"
+            "access_token": "invalid_access_token"
         }
     )
 
@@ -67,7 +67,7 @@ def test_unauthenticated_item_creation(client):
                 "description": "desc of something"
             },
             {
-                "Authorization": ""
+                "access_token": ""
             }
        ),
        (
@@ -85,7 +85,7 @@ def test_unauthenticated_item_creation(client):
                 "description": "desc of something"
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
 
        ),
@@ -94,7 +94,7 @@ def test_unauthenticated_item_creation(client):
                 "description": "desc of something"
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
 
        ),
@@ -104,7 +104,7 @@ def test_unauthenticated_item_creation(client):
                 "description": ""
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
 
        ),
@@ -114,7 +114,7 @@ def test_unauthenticated_item_creation(client):
                 "title": "do something",
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
 
        )
@@ -149,9 +149,9 @@ def test_successful_item_update(client):
 
     assert register_response.status_code == 201
 
-    Authorization = register_response.json["Authorization"]
+    access_token = register_response.json["access_token"]
     headers = {
-        "Authorization": Authorization
+        "access_token": access_token
     }
 
     create_item_response = client.post(
@@ -197,7 +197,7 @@ def test_unauthorized_item_update(client):
     )
 
     assert register_response_1.status_code == 201
-    Authorization1 = register_response_1.json["Authorization"]
+    access_token1 = register_response_1.json["access_token"]
 
     register_response_2 = client.post(
         "/register",
@@ -209,7 +209,7 @@ def test_unauthorized_item_update(client):
     )
 
     assert register_response_2.status_code == 201
-    Authorization2 = register_response_2.json["Authorization"]
+    access_token2 = register_response_2.json["access_token"]
 
     create_item_response = client.post(
         "/todos",
@@ -218,7 +218,7 @@ def test_unauthorized_item_update(client):
             "description": "desc of something"
         },
         headers={
-            "Authorization": Authorization1
+            "access_token": access_token1
         }
     )
 
@@ -236,7 +236,7 @@ def test_unauthorized_item_update(client):
             "description": new_description
         },
         headers={
-            "Authorization": Authorization2
+            "access_token": access_token2
         }
     )
 
@@ -255,7 +255,7 @@ def test_unauthorized_item_update(client):
                 "description": "some desc"
             },
             {
-                "Authorization": ""
+                "access_token": ""
             }
         ),
         (
@@ -271,7 +271,7 @@ def test_unauthorized_item_update(client):
                 "description": "some desc"
             },
             {
-                "Authorization": "does not matter"
+                "access_token": "does not matter"
             }
         ),
         (
@@ -279,7 +279,7 @@ def test_unauthorized_item_update(client):
                 "description": "some desc"
             },
             {
-                "Authorization": "does not matter"
+                "access_token": "does not matter"
             }
         ),
         (
@@ -288,7 +288,7 @@ def test_unauthorized_item_update(client):
                 "description": ""
             },
             {
-                "Authorization": "does not matter"
+                "access_token": "does not matter"
             }
         ),
         (
@@ -296,7 +296,7 @@ def test_unauthorized_item_update(client):
                 "title": "some title",
             },
             {
-                "Authorization": "does not matter"
+                "access_token": "does not matter"
             }
         ),
     ]
@@ -328,9 +328,9 @@ def test_successful_item_deletion(client):
 
     assert register_response.status_code == 201
 
-    Authorization = register_response.json["Authorization"]
+    access_token = register_response.json["access_token"]
     headers = {
-        "Authorization": Authorization
+        "access_token": access_token
     }
 
     create_item_response = client.post(
@@ -379,7 +379,7 @@ def test_unauthorized_item_deletion(client):
     )
 
     assert register_response_1.status_code == 201
-    Authorization1 = register_response_1.json["Authorization"]
+    access_token1 = register_response_1.json["access_token"]
 
     register_response_2 = client.post(
         "/register",
@@ -391,7 +391,7 @@ def test_unauthorized_item_deletion(client):
     )
 
     assert register_response_2.status_code == 201
-    Authorization2 = register_response_2.json["Authorization"]
+    access_token2 = register_response_2.json["access_token"]
 
     create_item_response = client.post(
         "/todos",
@@ -400,7 +400,7 @@ def test_unauthorized_item_deletion(client):
             "description": "desc of something"
         },
         headers={
-            "Authorization": Authorization1
+            "access_token": access_token1
         }
     )
 
@@ -411,7 +411,7 @@ def test_unauthorized_item_deletion(client):
     response = client.delete(
         f"/todos/{todo_id}",
         headers={
-            "Authorization": Authorization2
+            "access_token": access_token2
         }
     )
 
@@ -437,9 +437,9 @@ def test_successful_item_retrieval(client):
 
     assert register_response.status_code == 201
 
-    Authorization = register_response.json["Authorization"]
+    access_token = register_response.json["access_token"]
     headers = {
-        "Authorization": Authorization
+        "access_token": access_token
     }
 
     first_item_response = client.post(
@@ -508,7 +508,7 @@ def test_successful_item_retrieval(client):
                 "limit": 10
             },
             {
-                "Authorization": ""
+                "access_token": ""
             }
         ),
         (
@@ -516,7 +516,7 @@ def test_successful_item_retrieval(client):
                 "limit": 10
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
         ),
         (
@@ -524,13 +524,13 @@ def test_successful_item_retrieval(client):
                 "page": 1
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
         ),
         (
             {},
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
         ),
         (
@@ -539,7 +539,7 @@ def test_successful_item_retrieval(client):
                 "limit": 10
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
         ),
         (
@@ -548,7 +548,7 @@ def test_successful_item_retrieval(client):
                 "limit": 0
             },
             {
-                "Authorization": "doesntmatter"
+                "access_token": "doesntmatter"
             }
         )
     ]
@@ -584,7 +584,7 @@ def test_unauthenticated_item_retrieval(client):
 
     assert register_response.status_code == 201
 
-    Authorization = register_response.json["Authorization"]
+    access_token = register_response.json["access_token"]
 
     response = client.get(
         "/todos",
@@ -593,7 +593,7 @@ def test_unauthenticated_item_retrieval(client):
             "limit": 10
         },
         headers={
-            "Authorization": "invalid_Authorization"
+            "access_token": "invalid_access_token"
         }
     )
 

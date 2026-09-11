@@ -14,8 +14,8 @@ def test_register_success(client):
     )
 
     assert response.status_code == 201
-    assert "Authorization" in response.json
-    assert response.json["Authorization"]
+    assert "access_token" in response.json
+    assert response.json["access_token"]
 
 
 def test_register_duplicate_username(client):
@@ -132,8 +132,8 @@ def test_login_success(client, registered_user):
     )
 
     assert response.status_code == 200
-    assert "Authorization" in response.json
-    assert response.json["Authorization"]
+    assert "access_token" in response.json
+    assert response.json["access_token"]
 
 
 @pytest.mark.parametrize(

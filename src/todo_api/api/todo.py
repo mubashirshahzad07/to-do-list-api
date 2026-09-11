@@ -15,15 +15,15 @@ def create_todo_item():
         201: todo item successfully created
     """
 
-    authorization = request.headers.get("Authorization")
+    access_token = request.headers.get("access_token")
     title = request.form.get("title")
     description = request.form.get("description")
 
-    if not authorization or not title or not description:
+    if not access_token or not title or not description:
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    item_created = database.create_to_do_item(authorization, title, description)
+    item_created = database.create_to_do_item(access_token, title, description)
 
     if item_created is None:
         response = {"message": "Unauthenticated"}
@@ -41,16 +41,16 @@ def update_todo_item(todo_id: int):
         200: successful update
     """
 
-    authorization = request.headers.get("Authorization")
+    access_token = request.headers.get("access_token")
     title = request.form.get("title")
     description = request.form.get("description")
 
-    if not authorization or not title or not description:
+    if not access_token or not title or not description:
         response = {"message": "missing information"}
         return jsonify(response), 400
 
     updated_item = database.update_to_do_item(
-        authorization,
+        access_token,
         todo_id,
         title,
         description
@@ -71,13 +71,13 @@ def delete_todo_item(todo_id):
         204: successful deletion
     """
 
-    authorization = request.headers.get("Authorization")
+    access_token = request.headers.get("access_token")
 
-    if not authorization:
+    if not access_token:
         response = {"message": "Unauthenticated"}
         return jsonify(response), 401
 
-    deleted_item = database.delete_todo_item(authorization, todo_id)
+    deleted_item = database.delete_todo_item(access_token, todo_id)
     if deleted_item is None:
         response = {"message": "Forbidden"}
         return jsonify(response), 403
@@ -94,15 +94,15 @@ def get_todo_items():
         200: successful retreival
     """
 
-    authorization = request.headers.get("Authorization")
+    access_token = request.headers.get("access_token")
     page = request.args.get("page", type=int)
     limit = request.args.get("limit", type=int)
 
-    if not authorization or not page or not limit or page <= 0 or limit <= 0:
+    if not access_token or not page or not limit or page <= 0 or limit <= 0:
         response = {"message": "missing information"}
         return jsonify(response), 400
 
-    todo_items = database.get_todo_items(authorization, page, limit)
+    todo_items = database.get_todo_items(access_token, page, limit)
     if todo_items is None:
         response = {"message": "Unauthenticated"}
         return jsonify(response), 401

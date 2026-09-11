@@ -4,6 +4,7 @@ import os
 
 from hashlib import sha256
 from dotenv import load_dotenv
+from datetime import date, datetime, timezone, timedelta
 
 from ..db import queries
 
@@ -29,7 +30,7 @@ def register_user(username: str, email: str, password: str) -> dict | None:
     """
     Return:
         None: username or email is already taken
-        dict (token): user is created
+        dict (access_token, refresh_token): user is created
     """
 
     connection = sqlite3.connect("todo.db")
@@ -55,64 +56,101 @@ def register_user(username: str, email: str, password: str) -> dict | None:
 
     connection.close()
 
-    token = jwt.encode(
-        {"user_id": user_id},
+    access_payload = {
+        "user_id": user_id,
+        "type": "access",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
+    }
+
+    refresh_payload = {
+        "user_id": user_id,
+        "type": "refresh",
+        "exp": datetime.now(timezone.utc) + timedelta(days=30)
+    }
+
+    access_token = jwt.encode(
+        access_payload,
         SECRET_KEY,
         algorithm="HS256"
     )
 
-    return {"Authorization": f"Bearer {token}"}
+    refresh_token = jwt.encode(
+        refresh_payload,
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    response = {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
+
+    return response
 
 
 def login(email: str, password: str) -> dict | None:
     """
     Return:
         None: invalid login information
-        dict (token): valid login information
+        dict (access_token, refresh_token): valid login information
     """
 
     connection = sqlite3.connect("todo.db")
 
     cursor = connection.execute(queries.find_user_with_email, (email, ))
     user = cursor.fetchone()
+    connection.close()
+
     if not user:
-        connection.close()
         return None
 
     user_id, password_hash = user[0], user[1]
     entered_hash = sha256(password.encode("utf-8")).hexdigest()
 
-    if entered_hash == password_hash:
-        token = jwt.encode(
-            {"user_id": user_id},
-            SECRET_KEY,
-            algorithm="HS256"
-        )
+    if entered_hash != password_hash:
+        return None
 
-        connection.close()
-        return {"Authorization": f"Bearer {token}"}
+    access_payload = {
+        "user_id": user_id,
+        "type": "access",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
+    }
 
-    connection.close()
-    return None
+    refresh_payload = {
+        "user_id": user_id,
+        "type": "refresh",
+        "exp": datetime.now(timezone.utc) + timedelta(days=30)
+    }
+
+    access_token = jwt.encode(
+        access_payload,
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    refresh_token = jwt.encode(
+        refresh_payload,
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    response = {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
+
+    return response
 
 
-def _verify_token(authorization: str) -> dict | None:
+def _verify_token(access_token: str) -> dict | None:
     """
     Return:
         None: unauthenticated
         dict (payload): valid token
     """
-    auth_parts = authorization.split()
-    if len(auth_parts) != 2:
-        return None
-
-    scheme, token = auth_parts
-    if scheme != "Bearer" or not token:
-        return None
-
     try:
         payload = jwt.decode(
-            token,
+            access_token,
             SECRET_KEY,
             algorithms=["HS256"]
         )
@@ -122,14 +160,14 @@ def _verify_token(authorization: str) -> dict | None:
     return payload
 
 
-def create_to_do_item(authorization: str, title: str, desc: str) -> dict | None:
+def create_to_do_item(access_token: str, title: str, desc: str) -> dict | None:
     """
     Return:
         None: unauthenticated or unauthorized
         dict (created_item): successful creation of to do item
     """
 
-    payload = _verify_token(authorization)
+    payload = _verify_token(access_token)
     if not payload:
         return None
 
@@ -160,7 +198,7 @@ def create_to_do_item(authorization: str, title: str, desc: str) -> dict | None:
 
 
 def update_to_do_item(
-        authorization: str,
+        access_token: str,
         todo_id: int,
         title: str,
         desc: str
@@ -171,7 +209,7 @@ def update_to_do_item(
         dict(updated_item): todo item is successfully updated
     """
 
-    payload = _verify_token(authorization)
+    payload = _verify_token(access_token)
     if payload is None:
         return None
 
@@ -210,14 +248,14 @@ def update_to_do_item(
     return response
 
 
-def delete_todo_item(authorization: str, todo_id: int) -> int | None:
+def delete_todo_item(access_token: str, todo_id: int) -> int | None:
     """
     Return:
         None: unauthenticated, unauthorized, or todo item doesn't exist
         int(status_code): successful deletion
     """
 
-    payload = _verify_token(authorization)
+    payload = _verify_token(access_token)
     if payload is None:
         return None
 
@@ -244,14 +282,14 @@ def delete_todo_item(authorization: str, todo_id: int) -> int | None:
     return 204
 
 
-def get_todo_items(authorization: str, page: int, limit: int) -> dict | None:
+def get_todo_items(access_token: str, page: int, limit: int) -> dict | None:
     """
     Return:
         None: unauthenticated
         dict(todo_items): successful retreival
     """
 
-    payload = _verify_token(authorization)
+    payload = _verify_token(access_token)
     if payload is None:
         return None
 
