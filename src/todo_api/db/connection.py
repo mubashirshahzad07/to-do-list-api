@@ -59,7 +59,7 @@ def register_user(username: str, email: str, password: str) -> dict | None:
     access_payload = {
         "user_id": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5)
     }
 
     refresh_payload = {
@@ -113,7 +113,7 @@ def login(email: str, password: str) -> dict | None:
     access_payload = {
         "user_id": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5)
     }
 
     refresh_payload = {
@@ -376,7 +376,7 @@ def refresh_access_token(refresh_token: str) -> dict | None:
     access_payload = {
         "user_id": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(seconds=10)  # change after testing
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5)
     }
 
     access_token = jwt.encode(
