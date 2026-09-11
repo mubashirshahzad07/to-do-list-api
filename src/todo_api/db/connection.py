@@ -61,7 +61,7 @@ def register_user(username: str, email: str, password: str) -> dict | None:
         algorithm="HS256"
     )
 
-    return {"token": token}
+    return {"Authorization": f"Bearer {token}"}
 
 
 def login(email: str, password: str) -> dict | None:
@@ -90,18 +90,26 @@ def login(email: str, password: str) -> dict | None:
         )
 
         connection.close()
-        return {"token": token}
+        return {"Authorization": f"Bearer {token}"}
 
     connection.close()
     return None
 
 
-def _verify_token(token: str) -> dict | None:
+def _verify_token(authorization: str) -> dict | None:
     """
     Return:
         None: unauthenticated
         dict (payload): valid token
     """
+    auth_parts = authorization.split()
+    if len(auth_parts) != 2:
+        return None
+
+    scheme, token = auth_parts
+    if scheme != "Bearer" or not token:
+        return None
+
     try:
         payload = jwt.decode(
             token,
@@ -114,14 +122,14 @@ def _verify_token(token: str) -> dict | None:
     return payload
 
 
-def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
+def create_to_do_item(authorization: str, title: str, desc: str) -> dict | None:
     """
     Return:
         None: unauthenticated or unauthorized
         dict (created_item): successful creation of to do item
     """
 
-    payload = _verify_token(token)
+    payload = _verify_token(authorization)
     if not payload:
         return None
 
@@ -152,7 +160,7 @@ def create_to_do_item(token: str, title: str, desc: str) -> dict | None:
 
 
 def update_to_do_item(
-        token: str,
+        authorization: str,
         todo_id: int,
         title: str,
         desc: str
@@ -163,7 +171,7 @@ def update_to_do_item(
         dict(updated_item): todo item is successfully updated
     """
 
-    payload = _verify_token(token)
+    payload = _verify_token(authorization)
     if payload is None:
         return None
 
@@ -202,14 +210,14 @@ def update_to_do_item(
     return response
 
 
-def delete_todo_item(token: str, todo_id: int) -> int | None:
+def delete_todo_item(authorization: str, todo_id: int) -> int | None:
     """
     Return:
         None: unauthenticated, unauthorized, or todo item doesn't exist
         int(status_code): successful deletion
     """
 
-    payload = _verify_token(token)
+    payload = _verify_token(authorization)
     if payload is None:
         return None
 
@@ -236,14 +244,14 @@ def delete_todo_item(token: str, todo_id: int) -> int | None:
     return 204
 
 
-def get_todo_items(token: str, page: int, limit: int) -> dict | None:
+def get_todo_items(authorization: str, page: int, limit: int) -> dict | None:
     """
     Return:
         None: unauthenticated
         dict(todo_items): successful retreival
     """
 
-    payload = _verify_token(token)
+    payload = _verify_token(authorization)
     if payload is None:
         return None
 
